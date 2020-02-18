@@ -2,7 +2,9 @@ package com.vsb.tamz.osmz_http_server
 
 import android.util.Log
 import com.vsb.tamz.osmz_http_server.resolver.HttpRequestResolver
-import java.io.*
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStreamReader
 import java.net.ServerSocket
 import java.net.Socket
 
@@ -21,16 +23,17 @@ class SocketServer(private val port: Int) : Runnable {
                     val socket: Socket = it.accept();
                     Log.d("SERVER", "Socket Accepted");
 
-                    val output = BufferedWriter(OutputStreamWriter(socket.getOutputStream()));
+                    val outputStream = socket.getOutputStream();
                     val input = BufferedReader(InputStreamReader(socket.getInputStream()));
 
                     val response = input.readLine();
                     Log.d("SERVER","Accepted message: $response");
 
-                    val requestResult = HttpRequestResolver.resolve(response);
-                    output.write(requestResult.body);
+                    if (response != null) {
+                        val requestResult = HttpRequestResolver.resolve(response);
+                        requestResult.writeTo(outputStream);
+                    }
 
-                    output.flush();
                     socket.close();
                     Log.d("SERVER", "Socket closed");
                 }

@@ -7,6 +7,14 @@ import java.util.regex.Pattern
 
 object HttpRequestResolver {
 
+    private val BAD_REQUEST_MESSAGE = """
+        <html>
+            <body>
+                <h1>Bad request!</h1>
+            </body>
+        </html>        
+    """.trimIndent();
+
     private val pattern = Pattern.compile("(${GET}|${POST}|${PUT}|${DELETE}|${HEAD}|${OPTIONS}|${PATCH}) (/.*) (HTTP/.*)");
     private val requestHandlerChain = GetRequestHandler();
 
@@ -24,7 +32,12 @@ object HttpRequestResolver {
         }
 
         if (method == null || path == null || protocol == null) {
-            return HttpResponse(code = HttpResponseCode.BAD_REQUEST);
+            return HttpResponse(
+                HttpResponseCode.BAD_REQUEST,
+                ContentType.TEXT_HTML,
+                BAD_REQUEST_MESSAGE.toByteArray().size.toLong(),
+                BAD_REQUEST_MESSAGE
+            );
         }
 
         val request = HttpRequest(path, valueOf(method), protocol);
