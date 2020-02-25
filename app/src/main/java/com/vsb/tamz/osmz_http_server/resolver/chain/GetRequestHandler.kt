@@ -34,16 +34,39 @@ class GetRequestHandler(private val nextHandler: RequestHandler? = null) :
                 fileNotFoundResponse.toByteArray().size.toLong(),
                 fileNotFoundResponse
             );
-        } else {
-            val contentBytes = Files.readAllBytes(filePath);
-            val contentType = when(request.path.substring(request.path.lastIndexOf("."))) {
-                ".html" -> ContentType.TEXT_HTML
-                ".png" -> ContentType.IMAGE_PNG
-                else -> ContentType.TEXT_PLAIN
-            }
-            val contentLength = filePath.toFile().length();
+        } else if (Files.isDirectory(filePath)) {
+            val fileList = StringBuilder();
+            Files.newDirectoryStream(filePath)
+                .forEach {
+                    fileList.append("<li><a href=\"/${it.fileName}\">${it.fileName}</a></li>")
+                }
+            val response = """
+                <html>
+                    <body>
+                        <ul>
+                            $fileList
+                        </ul>
+                    </body>
+                </html>
+            """.trimIndent();
 
-            return HttpResponse(HttpResponseCode.OK, contentType, contentLength, binaryContent = contentBytes);
+            return HttpResponse(
+                HttpResponseCode.OK,
+                ContentType.TEXT_HTML,
+                response.toByteArray().size.toLong(),
+                response
+            );
+        } else {
+                val contentBytes = Files.readAllBytes(filePath);
+                val contentType = when(request.path.substring(request.path.lastIndexOf("."))) {
+                    ".html" -> ContentType.TEXT_HTML
+                    ".png" -> ContentType.IMAGE_PNG
+                    else -> ContentType.TEXT_PLAIN
+                }
+                val contentLength = filePath.toFile().length();
+
+
+                return HttpResponse(HttpResponseCode.OK, contentType, contentLength, binaryContent = contentBytes, uri = request.path);
         }
     }
 }

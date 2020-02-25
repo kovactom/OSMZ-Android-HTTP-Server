@@ -7,7 +7,8 @@ data class HttpResponse(
     val contentType: ContentType,
     val contentLength: Long,
     val stringContent: String? = null,
-    val binaryContent: ByteArray? = null
+    val binaryContent: ByteArray? = null,
+    val uri: String? = null
 ) {
 
     fun writeTo(outputStream: OutputStream) {

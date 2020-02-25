@@ -4,8 +4,13 @@ import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.os.Message
 import android.view.View
 import android.widget.Button
+import android.widget.ScrollView
+import android.widget.TextView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
@@ -14,6 +19,24 @@ class MainActivity : Activity() {
 
     private var socketServer: SocketServer? = null;
     private var socketServerThread: Thread? = null;
+    private var logTextView: TextView? = null;
+
+    private var totalSendTextView: TextView? = null;
+    private var logScrollView: ScrollView? = null;
+    private var totalSendSize: Long = 0;
+
+    private val handler: Handler = object : Handler(Looper.getMainLooper()) {
+        override fun handleMessage(msg: Message) {
+            val metric: RequestMetric = msg.obj as RequestMetric;
+            totalSendSize += metric.responseSize;
+            logTextView?.append("URI: ${metric.uri} Size: ${metric.responseSize} B\n");
+            totalSendTextView?.text = "$totalSendSize B";
+
+            logScrollView?.post {
+                logScrollView?.fullScroll(View.FOCUS_DOWN);
+            }
+        }
+    }
 
     private val READ_EXTERNAL_STORAGE = 1
 
@@ -23,6 +46,11 @@ class MainActivity : Activity() {
 
         val serverStartBtn = findViewById<Button>(R.id.button1);
         val serverStopBtn = findViewById<Button>(R.id.button2);
+
+        this.logTextView = findViewById(R.id.textView);
+        this.totalSendTextView = findViewById(R.id.textView4);
+
+        this.logScrollView = findViewById(R.id.logScrollView);
 
         serverStartBtn.setOnClickListener(this::onServerStart);
         serverStopBtn.setOnClickListener(this::onServerStop);
@@ -36,7 +64,7 @@ class MainActivity : Activity() {
         when (requestCode) {
             READ_EXTERNAL_STORAGE -> if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 if (socketServer == null) {
-                    socketServer = SocketServer(12345);
+                    socketServer = SocketServer(12345, handler);
                 }
                 if (socketServerThread == null) {
                     socketServerThread = Thread(socketServer);
@@ -51,7 +79,7 @@ class MainActivity : Activity() {
 
     fun onServerStart(view: View) {
         if (socketServer == null) {
-            socketServer = SocketServer(12345);
+            socketServer = SocketServer(12345, handler);
         }
         if (socketServerThread == null) {
             socketServerThread = Thread(socketServer);
