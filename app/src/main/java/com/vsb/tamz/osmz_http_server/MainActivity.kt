@@ -17,12 +17,13 @@ import androidx.core.content.ContextCompat
 
 class MainActivity : Activity() {
 
+    private var logScrollView: ScrollView? = null;
+    private var logTextView: TextView? = null;
+    private var totalSendTextView: TextView? = null;
+    private var maxThreadCountText: TextView? = null;
+
     private var socketServer: SocketServer? = null;
     private var socketServerThread: Thread? = null;
-    private var logTextView: TextView? = null;
-
-    private var totalSendTextView: TextView? = null;
-    private var logScrollView: ScrollView? = null;
     private var totalSendSize: Long = 0;
 
     private val handler: Handler = object : Handler(Looper.getMainLooper()) {
@@ -44,16 +45,19 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_http_server)
 
-        val serverStartBtn = findViewById<Button>(R.id.button1);
-        val serverStopBtn = findViewById<Button>(R.id.button2);
+        val serverStartBtn = findViewById<Button>(R.id.startServerBtn);
+        val serverStopBtn = findViewById<Button>(R.id.stopServerBtn);
+        val maxtThreadsCountApplyBtn = findViewById<Button>(R.id.maxThreadsCountApplyButton);
 
-        this.logTextView = findViewById(R.id.textView);
-        this.totalSendTextView = findViewById(R.id.textView4);
-
+        this.logTextView = findViewById(R.id.metricsLogOutputText);
+        this.totalSendTextView = findViewById(R.id.sendBytesText);
+        this.maxThreadCountText = findViewById(R.id.maxThreadCountText);
         this.logScrollView = findViewById(R.id.logScrollView);
 
         serverStartBtn.setOnClickListener(this::onServerStart);
         serverStopBtn.setOnClickListener(this::onServerStop);
+        maxtThreadsCountApplyBtn.setOnClickListener(this::onSetMaxThreadCount);
+//        maxThreadCountText?.addTextChangedListener(afterTextChanged = this::onMaxThreadCountChange);
     }
 
     override fun onRequestPermissionsResult(
@@ -64,7 +68,7 @@ class MainActivity : Activity() {
         when (requestCode) {
             READ_EXTERNAL_STORAGE -> if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 if (socketServer == null) {
-                    socketServer = SocketServer(12345, handler);
+                    socketServer = SocketServer(12345, handler, 2);
                 }
                 if (socketServerThread == null) {
                     socketServerThread = Thread(socketServer);
@@ -79,7 +83,7 @@ class MainActivity : Activity() {
 
     fun onServerStart(view: View) {
         if (socketServer == null) {
-            socketServer = SocketServer(12345, handler);
+            socketServer = SocketServer(12345, handler, 2);
         }
         if (socketServerThread == null) {
             socketServerThread = Thread(socketServer);
@@ -100,4 +104,14 @@ class MainActivity : Activity() {
     fun onServerStop(view: View) {
         socketServer?.stop();
     }
+
+    fun onSetMaxThreadCount(view: View) {
+        val maxThreads: Int = maxThreadCountText?.text.toString().toInt();
+        val newMaxThreads = socketServer?.setMaxThreads(maxThreads)
+        maxThreadCountText?.text = newMaxThreads.toString();
+    }
+
+//    fun onMaxThreadCountChange(editable: Editable?) {
+//
+//    }
 }

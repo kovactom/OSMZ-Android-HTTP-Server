@@ -7,4 +7,11 @@
     <string name="btn1_text">Start HTTP Server</string>
     <string name="btn2_text">Stop HTTP Server</string>
 
+    <string name="maxThreadsCountLabel">Max threads count</string>
+    <string name="maxThreadsCountHint">2</string>
+    <string name="maxThreadsCountApplyButton">Apply</string>
+
+    <string name="sendBytesLabel">Send</string>
+    <string name="sendBytesInitialValue">0 B</string>
+
 </resources>

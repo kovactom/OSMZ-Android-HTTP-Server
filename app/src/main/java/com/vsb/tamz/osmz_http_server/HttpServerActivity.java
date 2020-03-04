@@ -1,7 +1,7 @@
 package com.vsb.tamz.osmz_http_server;
 
-import android.os.Bundle;
 import android.app.Activity;
+import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -16,8 +16,8 @@ public class HttpServerActivity extends Activity implements OnClickListener{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_http_server);
         
-        Button btn1 = (Button)findViewById(R.id.button1);
-        Button btn2 = (Button)findViewById(R.id.button2);
+        Button btn1 = (Button)findViewById(R.id.startServerBtn);
+        Button btn2 = (Button)findViewById(R.id.stopServerBtn);
          
         btn1.setOnClickListener(this);
         btn2.setOnClickListener(this);
@@ -36,11 +36,11 @@ public class HttpServerActivity extends Activity implements OnClickListener{
 	@Override
 	public void onClick(View v) {
 		// TODO Auto-generated method stub
-		if (v.getId() == R.id.button1) {
+		if (v.getId() == R.id.startServerBtn) {
 			s = new SocketServer2();
 			s.start();
 		}
-		if (v.getId() == R.id.button2) {
+		if (v.getId() == R.id.stopServerBtn) {
 			s.close();
 			try {
 				s.join();
