@@ -24,7 +24,7 @@ class GetRequestHandler(private val nextHandler: RequestHandler? = null) :
         Log.d("HANDLER", "GET");
 
         val externalStorage = Environment.getExternalStorageDirectory();
-        val filePath = Paths.get(externalStorage.absolutePath + "/Download${request.path}");
+        val filePath = Paths.get(externalStorage.absolutePath + "/${request.path}");
         Log.d("SD: ", filePath.toString());
 
         if (!Files.exists(filePath)) {
@@ -38,7 +38,8 @@ class GetRequestHandler(private val nextHandler: RequestHandler? = null) :
             val fileList = StringBuilder();
             Files.newDirectoryStream(filePath)
                 .forEach {
-                    fileList.append("<li><a href=\"/${it.fileName}\">${it.fileName}</a></li>")
+                    val path = it.toAbsolutePath().toString().replaceFirst("storage/emulated/0/", "");
+                    fileList.append("<li><a href=\"${path}\">${it.fileName}</a></li>")
                 }
             val response = """
                 <html>
