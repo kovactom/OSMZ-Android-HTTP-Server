@@ -2,6 +2,7 @@ package com.vsb.tamz.osmz_http_server
 
 import android.Manifest
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
@@ -48,6 +49,7 @@ class MainActivity : Activity() {
         val serverStartBtn = findViewById<Button>(R.id.startServerBtn);
         val serverStopBtn = findViewById<Button>(R.id.stopServerBtn);
         val maxtThreadsCountApplyBtn = findViewById<Button>(R.id.maxThreadsCountApplyButton);
+        val openCamerButton = findViewById<Button>(R.id.openCameraButton);
 
         this.logTextView = findViewById(R.id.metricsLogOutputText);
         this.totalSendTextView = findViewById(R.id.sendBytesText);
@@ -57,6 +59,7 @@ class MainActivity : Activity() {
         serverStartBtn.setOnClickListener(this::onServerStart);
         serverStopBtn.setOnClickListener(this::onServerStop);
         maxtThreadsCountApplyBtn.setOnClickListener(this::onSetMaxThreadCount);
+        openCamerButton.setOnClickListener(this::onOpenCamera);
 //        maxThreadCountText?.addTextChangedListener(afterTextChanged = this::onMaxThreadCountChange);
     }
 
@@ -111,7 +114,8 @@ class MainActivity : Activity() {
         maxThreadCountText?.text = newMaxThreads.toString();
     }
 
-//    fun onMaxThreadCountChange(editable: Editable?) {
-//
-//    }
+    fun onOpenCamera(view: View) {
+        val intent = Intent(this, CameraActivity::class.java);
+        startActivity(intent);
+    }
 }
