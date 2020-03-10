@@ -17,6 +17,7 @@ import java.io.InputStreamReader
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.concurrent.Semaphore
+import java.util.function.Consumer
 
 class SocketServer(private val port: Int, private val handler: Handler, private var maxThreads: Int) : Runnable {
 
@@ -58,14 +59,21 @@ class SocketServer(private val port: Int, private val handler: Handler, private 
                             Log.d("SERVER","Accepted message: $response");
 
                             if (response != null) {
-                                val requestResult = HttpRequestResolver.resolve(response);
-                                val message = Message();
-                                message.obj = RequestMetric(requestResult.uri ?: "", requestResult.contentLength);
-                                handler.sendMessage(message)
-                                requestResult.writeTo(outputStream);
+                                HttpRequestResolver.resolve(response, Consumer { httpResponse ->
+                                    GlobalScope.launch {
+                                        withContext(Dispatchers.IO) {
+                                            val message = Message();
+                                            message.obj = RequestMetric(httpResponse.uri ?: "", httpResponse.contentLength);
+                                            handler.sendMessage(message)
+                                            httpResponse.writeTo(outputStream);
+                                            Log.d("IMG", httpResponse.binaryContent?.size.toString());
+                                            socket.close();
+                                        }
+                                    }
+                                });
+                            } else {
+                                socket.close();
                             }
-
-                            socket.close();
                         }
                         Log.d("SERVER", "Socket closed");
                         semaphore.release();

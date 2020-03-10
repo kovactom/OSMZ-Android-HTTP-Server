@@ -2,7 +2,9 @@ package com.vsb.tamz.osmz_http_server.resolver
 
 import android.util.Log
 import com.vsb.tamz.osmz_http_server.resolver.HttpMethod.*
+import com.vsb.tamz.osmz_http_server.resolver.chain.CameraPictureRequestHandler
 import com.vsb.tamz.osmz_http_server.resolver.chain.GetRequestHandler
+import java.util.function.Consumer
 import java.util.regex.Pattern
 
 object HttpRequestResolver {
@@ -16,9 +18,9 @@ object HttpRequestResolver {
     """.trimIndent();
 
     private val pattern = Pattern.compile("(${GET}|${POST}|${PUT}|${DELETE}|${HEAD}|${OPTIONS}|${PATCH}) (/.*) (HTTP/.*)");
-    private val requestHandlerChain = GetRequestHandler();
+    private val requestHandlerChain = CameraPictureRequestHandler(GetRequestHandler());
 
-    fun resolve(responseBody: String): HttpResponse {
+    fun resolve(responseBody: String, callback: Consumer<HttpResponse>) {
         val matcher = pattern.matcher(responseBody);
 
         var method: String? = null;
@@ -32,17 +34,20 @@ object HttpRequestResolver {
         }
 
         if (method == null || path == null || protocol == null) {
-            return HttpResponse(
-                HttpResponseCode.BAD_REQUEST,
-                ContentType.TEXT_HTML,
-                BAD_REQUEST_MESSAGE.toByteArray().size.toLong(),
-                BAD_REQUEST_MESSAGE
-            );
+            callback.accept(
+                HttpResponse(
+                    HttpResponseCode.BAD_REQUEST,
+                    ContentType.TEXT_HTML,
+                    BAD_REQUEST_MESSAGE.toByteArray().size.toLong(),
+                    BAD_REQUEST_MESSAGE
+                )
+            )
+            return;
         }
 
         val request = HttpRequest(path, valueOf(method), protocol);
         Log.d("RESOLVER", request.toString());
 
-        return requestHandlerChain.handleRequest(request);
+        requestHandlerChain.handleRequest(request, callback);
     }
 }

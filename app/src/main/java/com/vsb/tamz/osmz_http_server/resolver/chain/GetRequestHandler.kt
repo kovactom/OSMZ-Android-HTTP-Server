@@ -19,7 +19,7 @@ class GetRequestHandler(private val nextHandler: RequestHandler? = null) :
 
     override fun handleRequest(request: HttpRequest): HttpResponse {
         if (request.method !== HttpMethod.GET) {
-            super.handleRequest(request)
+            return super.handleRequest(request)
         }
         Log.d("HANDLER", "GET");
 

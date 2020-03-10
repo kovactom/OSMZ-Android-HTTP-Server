@@ -25,8 +25,23 @@ import java.util.*
 class CameraActivity : Activity() {
 
     private val REQUEST_WRITE_STORAGE_REQUEST_CODE: Int = 10;
-    private var mCamera: Camera? = null
     private var mPreview: CameraPreview? = null
+
+    companion object {
+        private var mCamera: Camera? = null
+        /** A safe way to get an instance of the Camera object. */
+        fun getCameraInstance(): Camera? {
+            return try {
+                if (mCamera == null) {
+                    mCamera = Camera.open() // attempt to get a Camera instance
+                }
+                mCamera;
+            } catch (e: Exception) {
+                // Camera is not available (in use or does not exist)
+                null // returns null if camera is unavailable )
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,17 +86,6 @@ class CameraActivity : Activity() {
             Log.d(TAG, "File not found: ${e.message}")
         } catch (e: IOException) {
             Log.d(TAG, "Error accessing file: ${e.message}")
-        }
-    }
-
-
-    /** A safe way to get an instance of the Camera object. */
-    fun getCameraInstance(): Camera? {
-        return try {
-            Camera.open() // attempt to get a Camera instance
-        } catch (e: Exception) {
-            // Camera is not available (in use or does not exist)
-            null // returns null if camera is unavailable )
         }
     }
 
