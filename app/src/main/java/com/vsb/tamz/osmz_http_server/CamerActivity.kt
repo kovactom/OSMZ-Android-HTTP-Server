@@ -5,11 +5,14 @@ import android.app.Activity
 import android.content.ContentValues.TAG
 import android.content.pm.PackageManager
 import android.hardware.Camera
+import android.media.CamcorderProfile
+import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
 import androidx.core.app.ActivityCompat
@@ -20,54 +23,68 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 
 
 class CameraActivity : Activity() {
 
     private val REQUEST_WRITE_STORAGE_REQUEST_CODE: Int = 10;
+    private val MEDIA_TYPE_IMAGE = 1
+    private val MEDIA_TYPE_VIDEO = 2
+
+    private var mCamera: Camera? = null
     private var mPreview: CameraPreview? = null
+    private var mediaRecorder: MediaRecorder? = null
+    private var scheduledExecutorService: ScheduledExecutorService? = null
+    private var takingPictureTask: ScheduledFuture<*>? = null;
 
     companion object {
-        private var mCamera: Camera? = null
-        /** A safe way to get an instance of the Camera object. */
-        fun getCameraInstance(): Camera? {
-            return try {
-                if (mCamera == null) {
-                    mCamera = Camera.open() // attempt to get a Camera instance
-                }
-                mCamera;
-            } catch (e: Exception) {
-                // Camera is not available (in use or does not exist)
-                null // returns null if camera is unavailable )
-            }
-        }
+        @Volatile
+        var lastPictureData: ByteArray? = null;
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_camera)
+        scheduledExecutorService = Executors.newScheduledThreadPool(1);
 
-        // Create an instance of Camera
         mCamera = getCameraInstance()
-
         mPreview = mCamera?.let {
-            // Create our Preview view
             CameraPreview(this, it)
         }
 
-        // Set the Preview view as the content of our activity.
         mPreview?.also {
             val preview: FrameLayout = findViewById(R.id.camera_preview)
             preview.addView(it)
         }
 
         val captureButton: Button = findViewById(R.id.button_capture)
-        captureButton.setOnClickListener {
-            // get an image from the camera
-            Log.d("CAMERA", "taking picture...");
-            mCamera?.takePicture(null, null, mPicture)
-        }
+        val startCaptureButton: Button = findViewById(R.id.startCaptureButton);
+
+        captureButton.setOnClickListener(this::onPictureTake);
+        startCaptureButton.setOnClickListener(this::onSchedulePictureTaking);
+
         requestAppPermissions();
+    }
+
+    private fun onPictureTake(view: View) {
+        Log.d("CAMERA", "taking picture...");
+        mCamera?.takePicture(null, null, mPicture)
+    }
+
+    private fun onSchedulePictureTaking(view: View) {
+        if (takingPictureTask == null || takingPictureTask?.isCancelled == true) {
+            takingPictureTask = scheduledExecutorService?.scheduleAtFixedRate({
+                Log.d("SCHEDULED", "picture taken");
+                mCamera?.takePicture(null, null) {data, _ ->
+                    lastPictureData = data;
+                    mCamera?.startPreview();
+                }
+            }, 0, 10, TimeUnit.SECONDS);
+        }
     }
 
     private val mPicture = Camera.PictureCallback { data, _ ->
@@ -89,8 +106,63 @@ class CameraActivity : Activity() {
         }
     }
 
-    val MEDIA_TYPE_IMAGE = 1
-    val MEDIA_TYPE_VIDEO = 2
+    private fun getCameraInstance(): Camera? {
+        return try {
+            if (mCamera == null) {
+                mCamera = Camera.open()
+            }
+            mCamera;
+        } catch (e: Exception) {
+            null // returns null if camera is unavailable )
+        }
+    }
+
+    private fun prepareVideoRecorder(): Boolean {
+        mediaRecorder = MediaRecorder()
+
+        mCamera?.let { camera ->
+            // Step 1: Unlock and set camera to MediaRecorder
+            camera?.unlock()
+
+            mediaRecorder?.run {
+                setCamera(camera)
+
+                // Step 2: Set sources
+                setAudioSource(MediaRecorder.AudioSource.CAMCORDER)
+                setVideoSource(MediaRecorder.VideoSource.CAMERA)
+
+                // Step 3: Set a CamcorderProfile (requires API Level 8 or higher)
+                setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH))
+
+                // Step 4: Set output file
+                setOutputFile(getOutputMediaFile(MEDIA_TYPE_VIDEO).toString())
+
+                // Step 5: Set the preview output
+                setPreviewDisplay(mPreview?.holder?.surface)
+
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT)
+                setVideoEncoder(MediaRecorder.VideoEncoder.DEFAULT)
+
+
+                // Step 6: Prepare configured MediaRecorder
+                return try {
+                    prepare()
+                    true
+                } catch (e: IllegalStateException) {
+                    Log.d(TAG, "IllegalStateException preparing MediaRecorder: ${e.message}")
+                    releaseMediaRecorder()
+                    false
+                } catch (e: IOException) {
+                    Log.d(TAG, "IOException preparing MediaRecorder: ${e.message}")
+                    releaseMediaRecorder()
+                    false
+                }
+            }
+
+        }
+        return false
+    }
 
     /** Create a file Uri for saving an image or video */
     private fun getOutputMediaFileUri(type: Int): Uri {
@@ -99,17 +171,10 @@ class CameraActivity : Activity() {
 
     /** Create a File for saving an image or video */
     private fun getOutputMediaFile(type: Int): File? {
-        // To be safe, you should check that the SDCard is mounted
-        // using Environment.getExternalStorageState() before doing this.
-
         val mediaStorageDir = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
             "MyCameraApp"
         )
-        // This location works best if you want the created images to be shared
-        // between applications and persist after your app has been uninstalled.
-
-        // Create the storage directory if it does not exist
         mediaStorageDir.apply {
             if (!exists()) {
                 if (!mkdirs()) {
@@ -119,7 +184,6 @@ class CameraActivity : Activity() {
             }
         }
 
-        // Create a media file name
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
         return when (type) {
             MEDIA_TYPE_IMAGE -> {
@@ -130,6 +194,29 @@ class CameraActivity : Activity() {
             }
             else -> null
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        releaseMediaRecorder() // if you are using MediaRecorder, release it first
+        releaseCamera() // release the camera immediately on pause event
+        releaseScheduledThread() // release scheduled thread
+    }
+
+    private fun releaseMediaRecorder() {
+        mediaRecorder?.reset() // clear recorder configuration
+        mediaRecorder?.release() // release the recorder object
+        mediaRecorder = null
+        mCamera?.lock() // lock camera for later use
+    }
+
+    private fun releaseCamera() {
+        mCamera?.release() // release the camera for other applications
+        mCamera = null
+    }
+
+    private fun releaseScheduledThread() {
+        scheduledExecutorService?.shutdownNow();
     }
 
     private fun requestAppPermissions() {
@@ -144,7 +231,7 @@ class CameraActivity : Activity() {
                 Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE
             ),  REQUEST_WRITE_STORAGE_REQUEST_CODE
-        ) // your request code
+        )
     }
 
     private fun hasReadPermissions(): Boolean {
