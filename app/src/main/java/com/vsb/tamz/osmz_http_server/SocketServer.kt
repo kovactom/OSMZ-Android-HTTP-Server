@@ -17,7 +17,6 @@ import java.io.InputStreamReader
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.concurrent.Semaphore
-import java.util.function.Consumer
 
 class SocketServer(private val port: Int, private val handler: Handler, private var maxThreads: Int) : Runnable {
 
@@ -43,8 +42,7 @@ class SocketServer(private val port: Int, private val handler: Handler, private 
                             message.toByteArray().size.toLong(),
                             message
                         );
-                        requestResult.writeTo(socket.getOutputStream());
-                        socket.close();
+                        requestResult.writeTo(socket);
                         return@use;
                     }
 
@@ -52,30 +50,23 @@ class SocketServer(private val port: Int, private val handler: Handler, private 
                         Log.d("SERVER", "Socket Accepted");
 
                         withContext(Dispatchers.IO) {
-                            val outputStream = socket.getOutputStream();
-
                             val input = BufferedReader(InputStreamReader(socket.getInputStream()));
                             val response = input.readLine();
                             Log.d("SERVER","Accepted message: $response");
 
                             if (response != null) {
-                                HttpRequestResolver.resolve(response, Consumer { httpResponse ->
-                                    GlobalScope.launch {
-                                        withContext(Dispatchers.IO) {
-                                            val message = Message();
-                                            message.obj = RequestMetric(httpResponse.uri ?: "", httpResponse.contentLength);
-                                            handler.sendMessage(message)
-                                            httpResponse.writeTo(outputStream);
-                                            Log.d("IMG", httpResponse.binaryContent?.size.toString());
-                                            socket.close();
-                                        }
-                                    }
-                                });
+                                val requestResult = HttpRequestResolver.resolve(response);
+                                if (requestResult is HttpResponse) {
+                                    val message = Message();
+                                    message.obj = RequestMetric(requestResult.uri ?: "", requestResult.contentLength);
+                                    handler.sendMessage(message)
+                                }
+                                requestResult.writeTo(socket);
                             } else {
                                 socket.close();
+                                Log.d("SERVER", "Socket closed");
                             }
                         }
-                        Log.d("SERVER", "Socket closed");
                         semaphore.release();
                     }
                 }

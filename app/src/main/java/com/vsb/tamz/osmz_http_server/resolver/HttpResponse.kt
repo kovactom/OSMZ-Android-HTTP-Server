@@ -1,6 +1,6 @@
 package com.vsb.tamz.osmz_http_server.resolver
 
-import java.io.OutputStream
+import java.net.Socket
 
 data class HttpResponse(
     val status: HttpResponseCode,
@@ -9,12 +9,13 @@ data class HttpResponse(
     val stringContent: String? = null,
     val binaryContent: ByteArray? = null,
     val uri: String? = null
-) {
+): GenericResponse {
 
-    fun writeTo(outputStream: OutputStream) {
+    override fun writeTo(socket: Socket) {
+        val outputStream = socket.getOutputStream();
         val response = StringBuilder();
         response.appendln("HTTP/1.1 ${status.code} ${status.text}");
-        response.appendln("Content-Type: $contentType");
+        response.appendln("Content-Type: ${contentType.textValue}");
         response.appendln("Content-Length: $contentLength");
         response.appendln();
 
@@ -25,6 +26,7 @@ data class HttpResponse(
             outputStream.write(binaryContent);
         }
         outputStream.flush();
+        socket.close();
     }
 
     override fun equals(other: Any?): Boolean {

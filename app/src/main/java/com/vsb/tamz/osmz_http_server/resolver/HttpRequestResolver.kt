@@ -3,8 +3,8 @@ package com.vsb.tamz.osmz_http_server.resolver
 import android.util.Log
 import com.vsb.tamz.osmz_http_server.resolver.HttpMethod.*
 import com.vsb.tamz.osmz_http_server.resolver.chain.CameraPictureRequestHandler
+import com.vsb.tamz.osmz_http_server.resolver.chain.CameraStreamRequestHandler
 import com.vsb.tamz.osmz_http_server.resolver.chain.GetRequestHandler
-import java.util.function.Consumer
 import java.util.regex.Pattern
 
 object HttpRequestResolver {
@@ -18,9 +18,9 @@ object HttpRequestResolver {
     """.trimIndent();
 
     private val pattern = Pattern.compile("(${GET}|${POST}|${PUT}|${DELETE}|${HEAD}|${OPTIONS}|${PATCH}) (/.*) (HTTP/.*)");
-    private val requestHandlerChain = CameraPictureRequestHandler(GetRequestHandler());
+    private val requestHandlerChain = CameraStreamRequestHandler(CameraPictureRequestHandler(GetRequestHandler()));
 
-    fun resolve(responseBody: String, callback: Consumer<HttpResponse>) {
+    fun resolve(responseBody: String): GenericResponse {
         val matcher = pattern.matcher(responseBody);
 
         var method: String? = null;
@@ -34,20 +34,17 @@ object HttpRequestResolver {
         }
 
         if (method == null || path == null || protocol == null) {
-            callback.accept(
-                HttpResponse(
-                    HttpResponseCode.BAD_REQUEST,
-                    ContentType.TEXT_HTML,
-                    BAD_REQUEST_MESSAGE.toByteArray().size.toLong(),
-                    BAD_REQUEST_MESSAGE
-                )
-            )
-            return;
+            return HttpResponse(
+                HttpResponseCode.BAD_REQUEST,
+                ContentType.TEXT_HTML,
+                BAD_REQUEST_MESSAGE.toByteArray().size.toLong(),
+                BAD_REQUEST_MESSAGE
+            );
         }
 
         val request = HttpRequest(path, valueOf(method), protocol);
         Log.d("RESOLVER", request.toString());
 
-        requestHandlerChain.handleRequest(request, callback);
+        return requestHandlerChain.handleRequest(request);
     }
 }

@@ -23,10 +23,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 
 
 class CameraActivity : Activity() {
@@ -42,6 +39,7 @@ class CameraActivity : Activity() {
     private var takingPictureTask: ScheduledFuture<*>? = null;
 
     companion object {
+        val syncLatch = CountDownLatch(1);
         @Volatile
         var lastPictureData: ByteArray? = null;
     }
@@ -79,11 +77,11 @@ class CameraActivity : Activity() {
         if (takingPictureTask == null || takingPictureTask?.isCancelled == true) {
             takingPictureTask = scheduledExecutorService?.scheduleAtFixedRate({
                 Log.d("SCHEDULED", "picture taken");
-                mCamera?.takePicture(null, null) {data, _ ->
+                mCamera?.takePicture(null, null) { data, _ ->
                     lastPictureData = data;
                     mCamera?.startPreview();
                 }
-            }, 0, 10, TimeUnit.SECONDS);
+            }, 0, 5, TimeUnit.SECONDS);
         }
     }
 

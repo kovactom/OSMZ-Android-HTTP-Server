@@ -17,7 +17,7 @@ class GetRequestHandler(private val nextHandler: RequestHandler? = null) :
         </html>
     """.trimIndent();
 
-    override fun handleRequest(request: HttpRequest): HttpResponse {
+    override fun handleRequest(request: HttpRequest): GenericResponse {
         if (request.method !== HttpMethod.GET) {
             return super.handleRequest(request)
         }
