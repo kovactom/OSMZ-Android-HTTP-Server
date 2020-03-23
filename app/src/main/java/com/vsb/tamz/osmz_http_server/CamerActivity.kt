@@ -36,7 +36,6 @@ class CameraActivity : Activity() {
     private var mediaRecorder: MediaRecorder? = null
 
     companion object {
-        val syncLatch = CountDownLatch(1);
         @Volatile
         var lastPictureData: ByteArray? = null;
     }
