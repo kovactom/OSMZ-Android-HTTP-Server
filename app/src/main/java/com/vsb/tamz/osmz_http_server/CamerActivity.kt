@@ -4,6 +4,9 @@ import android.Manifest
 import android.app.Activity
 import android.content.ContentValues.TAG
 import android.content.pm.PackageManager
+import android.graphics.ImageFormat
+import android.graphics.Rect
+import android.graphics.YuvImage
 import android.hardware.Camera
 import android.media.CamcorderProfile
 import android.media.MediaRecorder
@@ -17,13 +20,9 @@ import android.widget.Button
 import android.widget.FrameLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import java.io.File
-import java.io.FileNotFoundException
-import java.io.FileOutputStream
-import java.io.IOException
+import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.*
 
 
 class CameraActivity : Activity() {
@@ -35,8 +34,6 @@ class CameraActivity : Activity() {
     private var mCamera: Camera? = null
     private var mPreview: CameraPreview? = null
     private var mediaRecorder: MediaRecorder? = null
-    private var scheduledExecutorService: ScheduledExecutorService? = null
-    private var takingPictureTask: ScheduledFuture<*>? = null;
 
     companion object {
         val syncLatch = CountDownLatch(1);
@@ -47,7 +44,6 @@ class CameraActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_camera)
-        scheduledExecutorService = Executors.newScheduledThreadPool(1);
 
         mCamera = getCameraInstance()
         mPreview = mCamera?.let {
@@ -74,14 +70,25 @@ class CameraActivity : Activity() {
     }
 
     private fun onSchedulePictureTaking(view: View) {
-        if (takingPictureTask == null || takingPictureTask?.isCancelled == true) {
-            takingPictureTask = scheduledExecutorService?.scheduleAtFixedRate({
-                Log.d("SCHEDULED", "picture taken");
-                mCamera?.takePicture(null, null) { data, _ ->
-                    lastPictureData = data;
-                    mCamera?.startPreview();
-                }
-            }, 0, 5, TimeUnit.SECONDS);
+        val parameters = mCamera?.parameters
+        val size = parameters?.previewSize
+        val rectangle = Rect()
+        rectangle.bottom = size?.height ?: 0
+        rectangle.top = 0
+        rectangle.left = 0
+        rectangle.right = size?.width ?: 0
+
+        mCamera?.setPreviewCallback { data, _ ->
+            val image = YuvImage(
+                data,
+                ImageFormat.NV21,
+                size?.width ?: 0,
+                size?.height ?: 0,
+                null
+            )
+            val imageBytes = ByteArrayOutputStream()
+            image.compressToJpeg(rectangle, 100, imageBytes)
+            lastPictureData = imageBytes.toByteArray();
         }
     }
 
@@ -198,7 +205,6 @@ class CameraActivity : Activity() {
         super.onPause()
         releaseMediaRecorder() // if you are using MediaRecorder, release it first
         releaseCamera() // release the camera immediately on pause event
-        releaseScheduledThread() // release scheduled thread
     }
 
     private fun releaseMediaRecorder() {
@@ -211,10 +217,6 @@ class CameraActivity : Activity() {
     private fun releaseCamera() {
         mCamera?.release() // release the camera for other applications
         mCamera = null
-    }
-
-    private fun releaseScheduledThread() {
-        scheduledExecutorService?.shutdownNow();
     }
 
     private fun requestAppPermissions() {
