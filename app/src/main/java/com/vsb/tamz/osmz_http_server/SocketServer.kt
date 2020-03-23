@@ -66,8 +66,8 @@ class SocketServer(private val port: Int, private val handler: Handler, private 
                                 socket.close();
                                 Log.d("SERVER", "Socket closed");
                             }
+                            semaphore.release();
                         }
-                        semaphore.release();
                     }
                 }
             } catch (e: IOException) {

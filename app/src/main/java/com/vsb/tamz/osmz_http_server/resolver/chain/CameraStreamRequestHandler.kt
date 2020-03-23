@@ -14,7 +14,7 @@ class CameraStreamRequestHandler(
 
     override fun handleRequest(request: HttpRequest): GenericResponse {
         if (request.path != "/camera/stream") {
-            super.handleRequest(request)
+            return super.handleRequest(request)
         }
 
         return object : GenericResponse {
@@ -35,7 +35,7 @@ class CameraStreamRequestHandler(
                         response.appendln("Content-Type: ${ContentType.IMAGE_JPEG.textValue}");
                         response.appendln();
                         outputStream.write(response.toString().toByteArray())
-                        outputStream.write(CameraActivity.lastPictureData);
+                        CameraActivity.lastPictureData?.let { outputStream.write(it) };
                         outputStream.flush();
                         Log.d("STREAM", "MJPEG frame sent.")
                         Thread.sleep(40)
