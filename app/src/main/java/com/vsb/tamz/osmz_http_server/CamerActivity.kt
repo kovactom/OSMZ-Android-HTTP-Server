@@ -8,9 +8,7 @@ import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
 import android.hardware.Camera
-import android.media.CamcorderProfile
 import android.media.MediaRecorder
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -23,6 +21,10 @@ import androidx.core.content.ContextCompat
 import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 
 
 class CameraActivity : Activity() {
@@ -35,9 +37,15 @@ class CameraActivity : Activity() {
     private var mPreview: CameraPreview? = null
     private var mediaRecorder: MediaRecorder? = null
 
+    private var scheduledExecutorService: ScheduledExecutorService? = null;
+    private var scheduleCaptureTask: ScheduledFuture<*>? = null;
+
     companion object {
         @Volatile
         var lastPictureData: ByteArray? = null;
+
+        @Volatile
+        var currentPictureData: ByteArray? = null;
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,11 +62,19 @@ class CameraActivity : Activity() {
             preview.addView(it)
         }
 
-        val captureButton: Button = findViewById(R.id.button_capture)
+        val captureButton: Button = findViewById(R.id.captureButton)
+        val startStreamButton: Button = findViewById(R.id.startStreamButton);
+        val stopStreamButton: Button = findViewById(R.id.stopStreamButton);
         val startCaptureButton: Button = findViewById(R.id.startCaptureButton);
+        val stopCaptureButton: Button = findViewById(R.id.stopCaptureButton);
 
         captureButton.setOnClickListener(this::onPictureTake);
-        startCaptureButton.setOnClickListener(this::onSchedulePictureTaking);
+        startStreamButton.setOnClickListener(this::startStreaming);
+        stopStreamButton.setOnClickListener(this::stopStreaming);
+        startCaptureButton.setOnClickListener(this::startCapturing)
+        stopCaptureButton.setOnClickListener(this::stopCapturing);
+
+        scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
         requestAppPermissions();
     }
@@ -68,7 +84,20 @@ class CameraActivity : Activity() {
         mCamera?.takePicture(null, null, mPicture)
     }
 
-    private fun onSchedulePictureTaking(view: View) {
+    private fun startCapturing(view: View) {
+        scheduleCaptureTask = scheduledExecutorService?.scheduleAtFixedRate({
+            mCamera?.takePicture(null, null, {
+                    data, _ -> lastPictureData = data;
+                    mCamera?.startPreview();
+            })
+        }, 0, 5, TimeUnit.SECONDS);
+    }
+
+    private fun stopCapturing(view: View) {
+        scheduleCaptureTask?.cancel(false);
+    }
+
+    private fun startStreaming(view: View) {
         val parameters = mCamera?.parameters
         val size = parameters?.previewSize
         val rectangle = Rect()
@@ -87,8 +116,12 @@ class CameraActivity : Activity() {
             )
             val imageBytes = ByteArrayOutputStream()
             image.compressToJpeg(rectangle, 100, imageBytes)
-            lastPictureData = imageBytes.toByteArray();
+            currentPictureData = imageBytes.toByteArray();
         }
+    }
+
+    private fun stopStreaming(view: View) {
+        mCamera?.setPreviewCallback(null);
     }
 
     private val mPicture = Camera.PictureCallback { data, _ ->
@@ -121,58 +154,6 @@ class CameraActivity : Activity() {
         }
     }
 
-    private fun prepareVideoRecorder(): Boolean {
-        mediaRecorder = MediaRecorder()
-
-        mCamera?.let { camera ->
-            // Step 1: Unlock and set camera to MediaRecorder
-            camera?.unlock()
-
-            mediaRecorder?.run {
-                setCamera(camera)
-
-                // Step 2: Set sources
-                setAudioSource(MediaRecorder.AudioSource.CAMCORDER)
-                setVideoSource(MediaRecorder.VideoSource.CAMERA)
-
-                // Step 3: Set a CamcorderProfile (requires API Level 8 or higher)
-                setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH))
-
-                // Step 4: Set output file
-                setOutputFile(getOutputMediaFile(MEDIA_TYPE_VIDEO).toString())
-
-                // Step 5: Set the preview output
-                setPreviewDisplay(mPreview?.holder?.surface)
-
-                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT)
-                setVideoEncoder(MediaRecorder.VideoEncoder.DEFAULT)
-
-
-                // Step 6: Prepare configured MediaRecorder
-                return try {
-                    prepare()
-                    true
-                } catch (e: IllegalStateException) {
-                    Log.d(TAG, "IllegalStateException preparing MediaRecorder: ${e.message}")
-                    releaseMediaRecorder()
-                    false
-                } catch (e: IOException) {
-                    Log.d(TAG, "IOException preparing MediaRecorder: ${e.message}")
-                    releaseMediaRecorder()
-                    false
-                }
-            }
-
-        }
-        return false
-    }
-
-    /** Create a file Uri for saving an image or video */
-    private fun getOutputMediaFileUri(type: Int): Uri {
-        return Uri.fromFile(getOutputMediaFile(type))
-    }
-
     /** Create a File for saving an image or video */
     private fun getOutputMediaFile(type: Int): File? {
         val mediaStorageDir = File(
@@ -202,8 +183,13 @@ class CameraActivity : Activity() {
 
     override fun onPause() {
         super.onPause()
+        stopTasks();
         releaseMediaRecorder() // if you are using MediaRecorder, release it first
         releaseCamera() // release the camera immediately on pause event
+    }
+
+    private fun stopTasks() {
+        scheduledExecutorService?.shutdownNow();
     }
 
     private fun releaseMediaRecorder() {
@@ -214,6 +200,7 @@ class CameraActivity : Activity() {
     }
 
     private fun releaseCamera() {
+        mCamera?.setPreviewCallback(null);
         mCamera?.release() // release the camera for other applications
         mCamera = null
     }

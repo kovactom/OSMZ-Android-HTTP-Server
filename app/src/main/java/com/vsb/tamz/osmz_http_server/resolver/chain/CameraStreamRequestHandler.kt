@@ -35,7 +35,7 @@ class CameraStreamRequestHandler(
                         response.appendln("Content-Type: ${ContentType.IMAGE_JPEG.textValue}");
                         response.appendln();
                         outputStream.write(response.toString().toByteArray())
-                        CameraActivity.lastPictureData?.let { outputStream.write(it) };
+                        CameraActivity.currentPictureData?.let { outputStream.write(it) };
                         outputStream.flush();
                         Log.d("STREAM", "MJPEG frame sent.")
                         Thread.sleep(40)
