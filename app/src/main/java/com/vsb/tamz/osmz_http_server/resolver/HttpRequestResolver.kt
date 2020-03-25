@@ -2,6 +2,7 @@ package com.vsb.tamz.osmz_http_server.resolver
 
 import android.util.Log
 import com.vsb.tamz.osmz_http_server.resolver.HttpMethod.*
+import com.vsb.tamz.osmz_http_server.resolver.chain.CGIRequestHandler
 import com.vsb.tamz.osmz_http_server.resolver.chain.CameraPictureRequestHandler
 import com.vsb.tamz.osmz_http_server.resolver.chain.CameraStreamRequestHandler
 import com.vsb.tamz.osmz_http_server.resolver.chain.GetRequestHandler
@@ -18,7 +19,7 @@ object HttpRequestResolver {
     """.trimIndent();
 
     private val pattern = Pattern.compile("(${GET}|${POST}|${PUT}|${DELETE}|${HEAD}|${OPTIONS}|${PATCH}) (/.*) (HTTP/.*)");
-    private val requestHandlerChain = CameraStreamRequestHandler(CameraPictureRequestHandler(GetRequestHandler()));
+    private val requestHandlerChain = CameraStreamRequestHandler(CameraPictureRequestHandler(CGIRequestHandler(GetRequestHandler())));
 
     fun resolve(responseBody: String): GenericResponse {
         val matcher = pattern.matcher(responseBody);
