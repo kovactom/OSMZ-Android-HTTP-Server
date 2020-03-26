@@ -18,13 +18,15 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.util.concurrent.Semaphore
 
-class SocketServer(private val port: Int, private val handler: Handler, private var maxThreads: Int) : Runnable {
+class SocketServer(private val port: Int, private var maxThreads: Int) : Runnable {
 
     @Volatile
     private var running = true;
 
     @Volatile
     private var semaphore = Semaphore(maxThreads);
+
+    private var handler: Handler? = null;
 
     override fun run() {
         Log.d("SERVER", "Creating socket");
@@ -59,7 +61,7 @@ class SocketServer(private val port: Int, private val handler: Handler, private 
                                 if (requestResult is HttpResponse) {
                                     val message = Message();
                                     message.obj = RequestMetric(requestResult.uri ?: "", requestResult.contentLength);
-                                    handler.sendMessage(message)
+                                    handler?.sendMessage(message)
                                 }
                                 requestResult.writeTo(socket);
                             } else {
@@ -81,9 +83,11 @@ class SocketServer(private val port: Int, private val handler: Handler, private 
         this.running = false;
     }
 
+    fun setMetricsHandler(handler: Handler) {
+        this.handler = handler;
+    }
+
     fun setMaxThreads(maxThreads: Int): Int {
-//        semaphore = Semaphore(maxThreads);
-//        Log.d("TH", semaphore.availablePermits().toString());
         if (maxThreads > this.maxThreads) {
             semaphore.release(maxThreads - this.maxThreads);
         } else if (!semaphore.tryAcquire(this.maxThreads - maxThreads)) {
