@@ -55,23 +55,6 @@ class MainActivity : Activity() {
             mServerService = binder.getService()
             mBound = true
 
-            val channel = NotificationChannel(HTTP_SERVER_CHANNEL, HTTP_SERVER_CHANNEL, NotificationManager.IMPORTANCE_NONE);
-            val notificationService = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager;
-            notificationService.createNotificationChannel(channel);
-
-            val pendingIntent: PendingIntent =
-                Intent(this@MainActivity, MainActivity::class.java).let { notificationIntent ->
-                    PendingIntent.getActivity(this@MainActivity, 0, notificationIntent, 0)
-                }
-
-            val notification: Notification = Notification.Builder(this@MainActivity, HTTP_SERVER_CHANNEL)
-                .setContentTitle("HTTP Server")
-                .setContentText("HTTP Server is still running.")
-                .setContentIntent(pendingIntent)
-                .build()
-
-            mServerService.startForeground(HTTP_SERVER_NOTIFICATION_ID, notification)
-
             mServerService.setMetricsHandler(handler);
         }
 
@@ -100,6 +83,11 @@ class MainActivity : Activity() {
         maxtThreadsCountApplyBtn.setOnClickListener(this::onSetMaxThreadCount);
         openCamerButton.setOnClickListener(this::onOpenCamera);
 //        maxThreadCountText?.addTextChangedListener(afterTextChanged = this::onMaxThreadCountChange);
+        // Bind to LocalService
+        serverServiceIntent = Intent(this, HttpServerService::class.java).also { intent ->
+//            startService(intent);
+            bindService(intent, connection, Context.BIND_AUTO_CREATE)
+        }
     }
 
     override fun onDestroy() {
@@ -123,15 +111,31 @@ class MainActivity : Activity() {
     }
 
     fun startServerService() {
-        // Bind to LocalService
-        serverServiceIntent = Intent(this, HttpServerService::class.java).also { intent ->
-            startService(intent);
-            bindService(intent, connection, Context.BIND_AUTO_CREATE)
-        }
+        startService(serverServiceIntent);
+        mServerService.setMetricsHandler(handler);
+
+        val channel = NotificationChannel(HTTP_SERVER_CHANNEL, HTTP_SERVER_CHANNEL, NotificationManager.IMPORTANCE_NONE);
+        val notificationService = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager;
+        notificationService.createNotificationChannel(channel);
+
+        val pendingIntent: PendingIntent =
+            Intent(this@MainActivity, MainActivity::class.java).let { notificationIntent ->
+                PendingIntent.getActivity(this@MainActivity, 0, notificationIntent, 0)
+            }
+
+        val notification: Notification = Notification.Builder(this@MainActivity, HTTP_SERVER_CHANNEL)
+            .setContentTitle("HTTP Server")
+            .setContentText("HTTP Server is still running.")
+            .setContentIntent(pendingIntent)
+            .build()
+
+        mServerService.startForeground(HTTP_SERVER_NOTIFICATION_ID, notification)
     }
 
     fun stopServerService() {
+
         mServerService.stopSelf();
+//        unbindService(connection);
         mServerService.stopForeground(true);
     }
 

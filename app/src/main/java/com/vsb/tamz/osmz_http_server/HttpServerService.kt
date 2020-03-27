@@ -8,7 +8,6 @@ import android.os.HandlerThread
 import android.os.IBinder
 import android.os.Process.THREAD_PRIORITY_BACKGROUND
 import android.util.Log
-import android.widget.Toast
 
 class HttpServerService: Service() {
 
@@ -28,8 +27,7 @@ class HttpServerService: Service() {
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show()
-
+        Log.d("SRV", "Starting service");
 
         // For each start request, send a message to start a job and deliver the
         // start ID so we know which request we're stopping when we finish the job
@@ -39,7 +37,8 @@ class HttpServerService: Service() {
         if (socketServerThread == null) {
             socketServerThread = Thread(socketServer);
         }
-        if (socketServerThread?.isAlive == false) {
+        if (socketServerThread?.state == Thread.State.NEW || socketServerThread?.state == Thread.State.TERMINATED) {
+            Log.d("SRV", "Starting thread");
             socketServerThread?.start();
         }
 
@@ -52,8 +51,7 @@ class HttpServerService: Service() {
     }
 
     override fun onDestroy() {
-        Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show()
-        Log.d("SRV", "Stopping");
+        Log.d("SRV", "Stopping service");
         socketServer?.stop();
     }
 
@@ -63,16 +61,6 @@ class HttpServerService: Service() {
 
     fun setMaxThreadCount(count: Int): Int {
         return socketServer?.setMaxThreads(count)?: 0;
-    }
-
-    fun startServer() {
-        if (socketServerThread?.isAlive == false) {
-            socketServerThread?.start();
-        }
-    }
-
-    fun stopServer() {
-        socketServer?.stop()
     }
 
     /**
