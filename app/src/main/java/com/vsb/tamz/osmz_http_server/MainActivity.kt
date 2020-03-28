@@ -129,13 +129,18 @@ class MainActivity : Activity() {
         // Bind to LocalService
         serverServiceIntent = Intent(this, HttpServerService::class.java).also { intent ->
             startService(intent);
-            bindService(intent, connection, Context.BIND_AUTO_CREATE)
+            if (!mBound) {
+                bindService(intent, connection, Context.BIND_AUTO_CREATE)
+            }
         }
     }
 
     fun stopServerService() {
         mServerService.stopSelf();
-        unbindService(connection);
+        if (mBound) {
+            unbindService(connection)
+            mBound = false;
+        };
         mServerService.stopForeground(true);
     }
 
