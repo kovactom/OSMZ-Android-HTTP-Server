@@ -2,9 +2,9 @@ package com.vsb.tamz.osmz_http_server.resolver.chain
 
 import android.util.Log
 import com.vsb.tamz.osmz_http_server.CameraActivity
-import com.vsb.tamz.osmz_http_server.resolver.ContentType
-import com.vsb.tamz.osmz_http_server.resolver.GenericResponse
-import com.vsb.tamz.osmz_http_server.resolver.HttpRequest
+import com.vsb.tamz.osmz_http_server.resolver.model.ContentType
+import com.vsb.tamz.osmz_http_server.resolver.model.GenericResponse
+import com.vsb.tamz.osmz_http_server.resolver.model.HttpRequest
 import java.net.Socket
 import java.net.SocketException
 
@@ -17,7 +17,8 @@ class CameraStreamRequestHandler(
             return super.handleRequest(request)
         }
 
-        return object : GenericResponse {
+        return object :
+            GenericResponse {
             override fun writeTo(socket: Socket) {
                 val outputStream = socket.getOutputStream();
                 val boundaryMark = "PictureBoundary";

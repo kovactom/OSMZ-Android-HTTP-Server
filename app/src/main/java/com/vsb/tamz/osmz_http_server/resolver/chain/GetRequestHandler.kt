@@ -2,7 +2,7 @@ package com.vsb.tamz.osmz_http_server.resolver.chain
 
 import android.os.Environment
 import android.util.Log
-import com.vsb.tamz.osmz_http_server.resolver.*
+import com.vsb.tamz.osmz_http_server.resolver.model.*
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -67,7 +67,13 @@ class GetRequestHandler(private val nextHandler: RequestHandler? = null) :
                 val contentLength = filePath.toFile().length();
 
 
-                return HttpResponse(HttpResponseCode.OK, contentType, contentLength, binaryContent = contentBytes, uri = request.path);
+                return HttpResponse(
+                    HttpResponseCode.OK,
+                    contentType,
+                    contentLength,
+                    binaryContent = contentBytes,
+                    uri = request.path
+                );
         }
     }
 }

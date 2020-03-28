@@ -8,7 +8,6 @@ import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
 import android.hardware.Camera
-import android.media.MediaRecorder
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -18,6 +17,7 @@ import android.widget.Button
 import android.widget.FrameLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.vsb.tamz.osmz_http_server.camera.CameraPreview
 import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -35,7 +35,6 @@ class CameraActivity : Activity() {
 
     private var mCamera: Camera? = null
     private var mPreview: CameraPreview? = null
-    private var mediaRecorder: MediaRecorder? = null
 
     private var scheduledExecutorService: ScheduledExecutorService? = null;
     private var scheduleCaptureTask: ScheduledFuture<*>? = null;
@@ -184,19 +183,11 @@ class CameraActivity : Activity() {
     override fun onPause() {
         super.onPause()
         stopTasks();
-        releaseMediaRecorder() // if you are using MediaRecorder, release it first
         releaseCamera() // release the camera immediately on pause event
     }
 
     private fun stopTasks() {
         scheduledExecutorService?.shutdownNow();
-    }
-
-    private fun releaseMediaRecorder() {
-        mediaRecorder?.reset() // clear recorder configuration
-        mediaRecorder?.release() // release the recorder object
-        mediaRecorder = null
-        mCamera?.lock() // lock camera for later use
     }
 
     private fun releaseCamera() {

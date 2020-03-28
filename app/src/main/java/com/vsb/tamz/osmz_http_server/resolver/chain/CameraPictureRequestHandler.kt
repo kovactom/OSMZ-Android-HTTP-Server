@@ -1,7 +1,7 @@
 package com.vsb.tamz.osmz_http_server.resolver.chain
 
 import com.vsb.tamz.osmz_http_server.CameraActivity
-import com.vsb.tamz.osmz_http_server.resolver.*
+import com.vsb.tamz.osmz_http_server.resolver.model.*
 
 class CameraPictureRequestHandler(
     private val nextHandler: RequestHandler

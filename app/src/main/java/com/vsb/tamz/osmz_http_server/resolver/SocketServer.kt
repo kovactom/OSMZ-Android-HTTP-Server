@@ -1,12 +1,12 @@
-package com.vsb.tamz.osmz_http_server
+package com.vsb.tamz.osmz_http_server.resolver
 
 import android.os.Handler
 import android.os.Message
 import android.util.Log
-import com.vsb.tamz.osmz_http_server.resolver.ContentType
-import com.vsb.tamz.osmz_http_server.resolver.HttpRequestResolver
-import com.vsb.tamz.osmz_http_server.resolver.HttpResponse
-import com.vsb.tamz.osmz_http_server.resolver.HttpResponseCode
+import com.vsb.tamz.osmz_http_server.resolver.model.ContentType
+import com.vsb.tamz.osmz_http_server.resolver.model.HttpResponse
+import com.vsb.tamz.osmz_http_server.resolver.model.HttpResponseCode
+import com.vsb.tamz.osmz_http_server.resolver.model.RequestMetric
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -38,12 +38,13 @@ class SocketServer(private val port: Int, private var maxThreads: Int) : Runnabl
                     val socket: Socket = it.accept();
                     if(!semaphore.tryAcquire()) {
                         val message = "Server too busy";
-                        val requestResult = HttpResponse(
-                            HttpResponseCode.OK,
-                            ContentType.TEXT_HTML,
-                            message.toByteArray().size.toLong(),
-                            message
-                        );
+                        val requestResult =
+                            HttpResponse(
+                                HttpResponseCode.OK,
+                                ContentType.TEXT_HTML,
+                                message.toByteArray().size.toLong(),
+                                message
+                            );
                         requestResult.writeTo(socket);
                         return@use;
                     }
@@ -60,7 +61,11 @@ class SocketServer(private val port: Int, private var maxThreads: Int) : Runnabl
                                 val requestResult = HttpRequestResolver.resolve(response);
                                 if (requestResult is HttpResponse) {
                                     val message = Message();
-                                    message.obj = RequestMetric(requestResult.uri ?: "", requestResult.contentLength);
+                                    message.obj =
+                                        RequestMetric(
+                                            requestResult.uri ?: "",
+                                            requestResult.contentLength
+                                        );
                                     handler?.sendMessage(message)
                                 }
                                 requestResult.writeTo(socket);

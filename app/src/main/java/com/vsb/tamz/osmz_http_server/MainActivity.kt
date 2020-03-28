@@ -14,6 +14,8 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.vsb.tamz.osmz_http_server.resolver.model.RequestMetric
+import com.vsb.tamz.osmz_http_server.service.HttpServerService
 
 
 class MainActivity : Activity() {
@@ -107,8 +109,10 @@ class MainActivity : Activity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        unbindService(connection)
-        mBound = false
+        if (mBound) {
+            unbindService(connection)
+            mBound = false
+        }
     }
 
 

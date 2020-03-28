@@ -1,4 +1,4 @@
-package com.vsb.tamz.osmz_http_server
+package com.vsb.tamz.osmz_http_server.camera
 
 import android.content.ContentValues.TAG
 import android.content.Context

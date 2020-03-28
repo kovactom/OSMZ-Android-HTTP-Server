@@ -1,4 +1,4 @@
-package com.vsb.tamz.osmz_http_server
+package com.vsb.tamz.osmz_http_server.service
 
 import android.app.Service
 import android.content.Intent
@@ -8,6 +8,7 @@ import android.os.HandlerThread
 import android.os.IBinder
 import android.os.Process.THREAD_PRIORITY_BACKGROUND
 import android.util.Log
+import com.vsb.tamz.osmz_http_server.resolver.SocketServer
 
 class HttpServerService: Service() {
 
@@ -32,7 +33,8 @@ class HttpServerService: Service() {
         // For each start request, send a message to start a job and deliver the
         // start ID so we know which request we're stopping when we finish the job
         if (socketServer == null) {
-            socketServer = SocketServer(12345, 2);
+            socketServer =
+                SocketServer(12345, 2);
         }
         if (socketServerThread == null) {
             socketServerThread = Thread(socketServer);
