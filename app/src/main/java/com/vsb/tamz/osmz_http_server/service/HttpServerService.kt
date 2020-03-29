@@ -39,7 +39,6 @@ class HttpServerService: Service() {
             }
             mSurfaceTexture = SurfaceTexture(0);
             mCamera?.setPreviewTexture(mSurfaceTexture);
-//            mCamera?.setPreviewDisplay(SurfaceView(this@HttpServerService).holder)
         }
     }
 

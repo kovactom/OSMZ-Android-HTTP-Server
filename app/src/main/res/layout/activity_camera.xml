@@ -21,18 +21,6 @@
         android:orientation="vertical">
 
         <Button
-            android:id="@+id/startStreamButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Start stream" />
-
-        <Button
-            android:id="@+id/stopStreamButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Stop stream" />
-
-        <Button
             android:id="@+id/startCaptureButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

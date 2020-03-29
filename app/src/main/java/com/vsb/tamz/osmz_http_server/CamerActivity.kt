@@ -8,6 +8,7 @@ import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
+import android.widget.Toast
 import com.vsb.tamz.osmz_http_server.camera.CameraHolder
 import com.vsb.tamz.osmz_http_server.camera.CameraPreview
 import java.io.File
@@ -43,14 +44,10 @@ class CameraActivity : Activity() {
         }
 
         val captureButton: Button = findViewById(R.id.captureButton)
-        val startStreamButton: Button = findViewById(R.id.startStreamButton);
-        val stopStreamButton: Button = findViewById(R.id.stopStreamButton);
         val startCaptureButton: Button = findViewById(R.id.startCaptureButton);
         val stopCaptureButton: Button = findViewById(R.id.stopCaptureButton);
 
         captureButton.setOnClickListener(this::onPictureTake);
-        startStreamButton.setOnClickListener {CameraHolder.startStreaming()};
-        stopStreamButton.setOnClickListener {CameraHolder.stopStreaming()};
         startCaptureButton.setOnClickListener(this::startCapturing)
         stopCaptureButton.setOnClickListener(this::stopCapturing);
 
@@ -100,6 +97,9 @@ class CameraActivity : Activity() {
         super.onPause()
         stopTasks();
         CameraHolder.releaseCamera() // release the camera immediately on pause event
+        Toast
+            .makeText(this, "Camera streaming was suspended. For resume, restart server service.", Toast.LENGTH_LONG)
+            .show();
     }
 
     private fun stopTasks() {

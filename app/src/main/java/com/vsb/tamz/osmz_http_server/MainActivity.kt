@@ -12,6 +12,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.ScrollView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.vsb.tamz.osmz_http_server.resolver.model.RequestMetric
@@ -103,7 +104,11 @@ class MainActivity : Activity() {
         openCamerButton.setOnClickListener(this::onOpenCamera);
         // Bind to LocalService
         serverServiceIntent = Intent(this, HttpServerService::class.java).also { intent ->
+            startService(intent);
             bindService(intent, connection, Context.BIND_AUTO_CREATE)
+            Toast
+                .makeText(this@MainActivity, "HTTP Server started...", Toast.LENGTH_LONG)
+                .show();
         }
     }
 

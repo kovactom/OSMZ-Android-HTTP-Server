@@ -32,6 +32,7 @@ object CameraHolder {
     private val REQUEST_WRITE_STORAGE_REQUEST_CODE: Int = 10;
     private var mCamera: Camera? = null
 
+    @Synchronized
     fun getCameraInstance(): Camera? {
         return try {
             if (mCamera == null) {
@@ -43,6 +44,7 @@ object CameraHolder {
         }
     }
 
+    @Synchronized
     fun startStreaming() {
         val parameters = mCamera?.parameters
         val size = parameters?.previewSize
@@ -67,6 +69,7 @@ object CameraHolder {
         }
     }
 
+    @Synchronized
     fun stopStreaming() {
         mCamera?.setPreviewCallback(null);
     }
@@ -99,6 +102,7 @@ object CameraHolder {
         }
     }
 
+    @Synchronized
     fun releaseCamera() {
         mCamera?.setPreviewCallback(null);
         mCamera?.release() // release the camera for other applications

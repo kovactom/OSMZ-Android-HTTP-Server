@@ -16,6 +16,7 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.net.ServerSocket
 import java.net.Socket
+import java.net.SocketException
 import java.util.concurrent.Semaphore
 
 class SocketServer(private val port: Int, private var maxThreads: Int) : Runnable {
@@ -28,15 +29,18 @@ class SocketServer(private val port: Int, private var maxThreads: Int) : Runnabl
 
     private var handler: Handler? = null;
 
+    private var socketServer: ServerSocket? = null;
+
     override fun run() {
         Log.d("SERVER", "Creating socket");
         while (running) {
             try {
-                ServerSocket(port).use {
+                socketServer = ServerSocket(port);
+                socketServer?.use {
                     Log.d("SERVER", "Socket Waiting for connection");
 
                     val socket: Socket = it.accept();
-                    if(!semaphore.tryAcquire()) {
+                    if (!semaphore.tryAcquire()) {
                         val message = "Server too busy";
                         val requestResult =
                             HttpResponse(
@@ -53,9 +57,10 @@ class SocketServer(private val port: Int, private var maxThreads: Int) : Runnabl
                         Log.d("SERVER", "Socket Accepted");
 
                         withContext(Dispatchers.IO) {
-                            val input = BufferedReader(InputStreamReader(socket.getInputStream()));
+                            val input =
+                                BufferedReader(InputStreamReader(socket.getInputStream()));
                             val response = input.readLine();
-                            Log.d("SERVER","Accepted message: $response");
+                            Log.d("SERVER", "Accepted message: $response");
 
                             if (response != null) {
                                 val requestResult = HttpRequestResolver.resolve(response);
@@ -77,15 +82,21 @@ class SocketServer(private val port: Int, private var maxThreads: Int) : Runnabl
                         }
                     }
                 }
+            } catch (e: SocketException) {
+                if (running) {
+                    Log.e("SERVER", "Error occurred in creating or accessing socket!", e);
+                }
+                semaphore.release();
             } catch (e: IOException) {
-                e.printStackTrace();
-                Log.d("SERVER", "Error occurred in communication!", e);
+                Log.e("SERVER", "Error occurred in communication!", e);
+                semaphore.release();
             }
         }
     }
 
     fun stop() {
         this.running = false;
+        this.socketServer?.close();
     }
 
     fun setMetricsHandler(handler: Handler) {
