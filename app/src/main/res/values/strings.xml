@@ -1,17 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="app_name">HTTPServer</string>
     <string name="action_settings">Settings</string>
-    <string name="hello_world">Hello world!</string>
-    <string name="btn1_text">Start HTTP Server</string>
-    <string name="btn2_text">Stop HTTP Server</string>
+
+    <string name="startHttpServerButton">Start HTTP Server</string>
+    <string name="stopHttpServerButton">Stop HTTP Server</string>
+
+    <string name="startCaptureButton">Start capture</string>
+    <string name="stopCaptureButton">Stop capture</string>
+    <string name="captureButton">Capture</string>
+
+    <string name="openCameraButton">Open camera</string>
+    <string name="maxThreadsCountApplyButton">Apply</string>
 
     <string name="maxThreadsCountLabel">Max threads count</string>
     <string name="maxThreadsCountHint">2</string>
-    <string name="maxThreadsCountApplyButton">Apply</string>
 
     <string name="sendBytesLabel">Send</string>
     <string name="sendBytesInitialValue">0 B</string>
-
 </resources>

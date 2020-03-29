@@ -3,7 +3,7 @@
     android:orientation="horizontal"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    >
+    android:baselineAligned="false">
 
     <FrameLayout
         android:id="@+id/camera_preview"
@@ -24,19 +24,19 @@
             android:id="@+id/startCaptureButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Start capture" />
+            android:text="@string/startCaptureButton" />
 
         <Button
             android:id="@+id/stopCaptureButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Stop capture" />
+            android:text="@string/stopCaptureButton" />
 
         <Button
             android:id="@+id/captureButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Capture" />
+            android:text="@string/captureButton" />
     </LinearLayout>
 
 </LinearLayout>

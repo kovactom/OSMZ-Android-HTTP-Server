@@ -32,7 +32,8 @@ class GetRequestHandler(private val nextHandler: RequestHandler? = null) :
                 HttpResponseCode.NOT_FOUND,
                 ContentType.TEXT_HTML,
                 fileNotFoundResponse.toByteArray().size.toLong(),
-                fileNotFoundResponse
+                fileNotFoundResponse,
+                uri = request.path
             );
         } else if (Files.isDirectory(filePath)) {
             val fileList = StringBuilder();
@@ -55,7 +56,8 @@ class GetRequestHandler(private val nextHandler: RequestHandler? = null) :
                 HttpResponseCode.OK,
                 ContentType.TEXT_HTML,
                 response.toByteArray().size.toLong(),
-                response
+                response,
+                uri = request.path
             );
         } else {
                 val contentBytes = Files.readAllBytes(filePath);
