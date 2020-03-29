@@ -52,8 +52,6 @@ class CameraActivity : Activity() {
         stopCaptureButton.setOnClickListener(this::stopCapturing);
 
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-
-        CameraHolder.requestAppPermissions(this);
     }
 
     private fun onPictureTake(view: View) {

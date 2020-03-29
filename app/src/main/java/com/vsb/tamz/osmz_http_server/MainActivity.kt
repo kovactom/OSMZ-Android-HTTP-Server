@@ -14,14 +14,13 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import com.vsb.tamz.osmz_http_server.resolver.model.RequestMetric
 import com.vsb.tamz.osmz_http_server.service.HttpServerService
 
 
 class MainActivity : Activity() {
 
-    private val READ_EXTERNAL_STORAGE = 1
+    private val PERMISSION_REQUEST_ID = 1;
     private val HTTP_SERVER_NOTIFICATION_ID = 1;
     private val HTTP_SERVER_CHANNEL = "HTTP_SERVER_CHANNEL";
 
@@ -102,14 +101,8 @@ class MainActivity : Activity() {
         serverStopBtn.setOnClickListener(this::onServerStop);
         maxtThreadsCountApplyBtn.setOnClickListener(this::onSetMaxThreadCount);
         openCamerButton.setOnClickListener(this::onOpenCamera);
-        // Bind to LocalService
-        serverServiceIntent = Intent(this, HttpServerService::class.java).also { intent ->
-            startService(intent);
-            bindService(intent, connection, Context.BIND_AUTO_CREATE)
-            Toast
-                .makeText(this@MainActivity, "HTTP Server started...", Toast.LENGTH_LONG)
-                .show();
-        }
+
+        startServerService();
     }
 
     override fun onDestroy() {
@@ -120,27 +113,31 @@ class MainActivity : Activity() {
         }
     }
 
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String?>?,
-        grantResults: IntArray
-    ) {
-        when (requestCode) {
-            READ_EXTERNAL_STORAGE -> if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // start service
-                startServerService();
-            }
-        }
-    }
-
     fun startServerService() {
-        // Bind to LocalService
-        serverServiceIntent = Intent(this, HttpServerService::class.java).also { intent ->
-            startService(intent);
-            if (!mBound) {
-                bindService(intent, connection, Context.BIND_AUTO_CREATE)
+        val hasReadExternalStoragePermission = hasReadExternalStoragePermission(this);
+        val hasWriteExternalStoragePermission = hasWriteExternalStoragePermission(this);
+        val hasCameraPermission = hasCameraPermission(this);
+
+        if(hasReadExternalStoragePermission && hasWriteExternalStoragePermission && hasCameraPermission) {
+            serverServiceIntent = Intent(this, HttpServerService::class.java).also { intent ->
+                startService(intent);
+                if (!mBound) {
+                    bindService(intent, connection, Context.BIND_AUTO_CREATE)
+                    Toast
+                        .makeText(this@MainActivity, "HTTP Server started...", Toast.LENGTH_LONG)
+                        .show();
+                }
             }
+        } else {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.CAMERA
+                ),
+                PERMISSION_REQUEST_ID
+            )
         }
     }
 
@@ -151,25 +148,16 @@ class MainActivity : Activity() {
             mBound = false;
         };
         mServerService.stopForeground(true);
+        Toast
+            .makeText(this@MainActivity, "HTTP Server stopped.", Toast.LENGTH_LONG)
+            .show();
     }
 
     fun onServerStart(view: View) {
-        val permissionCheck =
-            ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
-                READ_EXTERNAL_STORAGE
-            )
-        } else {
-            // start service
-            startServerService();
-        }
+        startServerService();
     }
 
     fun onServerStop(view: View) {
-        // stop service
         stopServerService();
     }
 
@@ -182,5 +170,17 @@ class MainActivity : Activity() {
     fun onOpenCamera(view: View) {
         val intent = Intent(this, CameraActivity::class.java);
         startActivity(intent);
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String?>?,
+        grantResults: IntArray
+    ) {
+        when (requestCode) {
+            PERMISSION_REQUEST_ID -> if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startServerService();
+            }
+        }
     }
 }
