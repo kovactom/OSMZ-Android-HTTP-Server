@@ -2,7 +2,7 @@ package com.vsb.tamz.osmz_http_server.resolver.chain
 
 import android.os.Environment
 import android.util.Log
-import com.vsb.tamz.osmz_http_server.resolver.*
+import com.vsb.tamz.osmz_http_server.resolver.model.*
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -32,7 +32,8 @@ class GetRequestHandler(private val nextHandler: RequestHandler? = null) :
                 HttpResponseCode.NOT_FOUND,
                 ContentType.TEXT_HTML,
                 fileNotFoundResponse.toByteArray().size.toLong(),
-                fileNotFoundResponse
+                fileNotFoundResponse,
+                uri = request.path
             );
         } else if (Files.isDirectory(filePath)) {
             val fileList = StringBuilder();
@@ -55,7 +56,8 @@ class GetRequestHandler(private val nextHandler: RequestHandler? = null) :
                 HttpResponseCode.OK,
                 ContentType.TEXT_HTML,
                 response.toByteArray().size.toLong(),
-                response
+                response,
+                uri = request.path
             );
         } else {
                 val contentBytes = Files.readAllBytes(filePath);
@@ -67,7 +69,13 @@ class GetRequestHandler(private val nextHandler: RequestHandler? = null) :
                 val contentLength = filePath.toFile().length();
 
 
-                return HttpResponse(HttpResponseCode.OK, contentType, contentLength, binaryContent = contentBytes, uri = request.path);
+                return HttpResponse(
+                    HttpResponseCode.OK,
+                    contentType,
+                    contentLength,
+                    binaryContent = contentBytes,
+                    uri = request.path
+                );
         }
     }
 }

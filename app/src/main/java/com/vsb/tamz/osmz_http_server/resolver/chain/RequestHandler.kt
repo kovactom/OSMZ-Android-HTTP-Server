@@ -1,6 +1,6 @@
 package com.vsb.tamz.osmz_http_server.resolver.chain
 
-import com.vsb.tamz.osmz_http_server.resolver.*
+import com.vsb.tamz.osmz_http_server.resolver.model.*
 
 abstract class RequestHandler(private val nextHandler: RequestHandler? = null) {
 

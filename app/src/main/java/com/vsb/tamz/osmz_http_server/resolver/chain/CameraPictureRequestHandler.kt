@@ -1,7 +1,7 @@
 package com.vsb.tamz.osmz_http_server.resolver.chain
 
-import com.vsb.tamz.osmz_http_server.CameraActivity
-import com.vsb.tamz.osmz_http_server.resolver.*
+import com.vsb.tamz.osmz_http_server.camera.CameraHolder
+import com.vsb.tamz.osmz_http_server.resolver.model.*
 
 class CameraPictureRequestHandler(
     private val nextHandler: RequestHandler
@@ -12,7 +12,7 @@ class CameraPictureRequestHandler(
             return super.handleRequest(request)
         }
 
-        val picture = CameraActivity.lastPictureData;
+        val picture = CameraHolder.lastPictureData;
         return HttpResponse(
             HttpResponseCode.OK,
             ContentType.IMAGE_JPEG,

@@ -1,4 +1,4 @@
-package com.vsb.tamz.osmz_http_server.resolver
+package com.vsb.tamz.osmz_http_server.resolver.model
 
 enum class ContentType(val textValue: String) {
     TEXT_HTML("text/html"),

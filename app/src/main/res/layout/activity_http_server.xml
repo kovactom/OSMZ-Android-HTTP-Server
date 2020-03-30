@@ -8,7 +8,7 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context=".HttpServerActivity" >
+    tools:context=".MainActivity" >
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -26,14 +26,14 @@
                 style="?android:attr/buttonBarButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/btn1_text" />
+                android:text="@string/startHttpServerButton" />
 
             <Button
                 android:id="@+id/stopServerBtn"
                 style="?android:attr/buttonBarButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/btn2_text" />
+                android:text="@string/stopHttpServerButton" />
 
         </LinearLayout>
 
@@ -68,7 +68,8 @@
                     android:id="@+id/openCameraButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Open camera" />
+                    android:text="@string/openCameraButton"
+                    style="?android:attr/buttonBarButtonStyle" />
 
                 <Button
                     android:id="@+id/maxThreadsCountApplyButton"
@@ -76,7 +77,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
                     android:text="@string/maxThreadsCountApplyButton"
-                    android:textAlignment="center" />
+                    style="?android:attr/buttonBarButtonStyle"/>
             </LinearLayout>
         </LinearLayout>
 

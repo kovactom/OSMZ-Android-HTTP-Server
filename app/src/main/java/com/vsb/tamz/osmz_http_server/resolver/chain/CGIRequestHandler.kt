@@ -1,7 +1,7 @@
 package com.vsb.tamz.osmz_http_server.resolver.chain
 
 import android.util.Log
-import com.vsb.tamz.osmz_http_server.resolver.*
+import com.vsb.tamz.osmz_http_server.resolver.model.*
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.URLDecoder

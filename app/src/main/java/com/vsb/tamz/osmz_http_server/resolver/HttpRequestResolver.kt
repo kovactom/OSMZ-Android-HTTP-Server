@@ -1,11 +1,12 @@
 package com.vsb.tamz.osmz_http_server.resolver
 
 import android.util.Log
-import com.vsb.tamz.osmz_http_server.resolver.HttpMethod.*
 import com.vsb.tamz.osmz_http_server.resolver.chain.CGIRequestHandler
 import com.vsb.tamz.osmz_http_server.resolver.chain.CameraPictureRequestHandler
 import com.vsb.tamz.osmz_http_server.resolver.chain.CameraStreamRequestHandler
 import com.vsb.tamz.osmz_http_server.resolver.chain.GetRequestHandler
+import com.vsb.tamz.osmz_http_server.resolver.model.*
+import com.vsb.tamz.osmz_http_server.resolver.model.HttpMethod.*
 import java.util.regex.Pattern
 
 object HttpRequestResolver {
@@ -43,7 +44,11 @@ object HttpRequestResolver {
             );
         }
 
-        val request = HttpRequest(path, valueOf(method), protocol);
+        val request = HttpRequest(
+            path,
+            valueOf(method),
+            protocol
+        );
         Log.d("RESOLVER", request.toString());
 
         return requestHandlerChain.handleRequest(request);

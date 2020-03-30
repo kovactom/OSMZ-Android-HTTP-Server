@@ -1,12 +1,12 @@
-package com.vsb.tamz.osmz_http_server
+package com.vsb.tamz.osmz_http_server.resolver
 
 import android.os.Handler
 import android.os.Message
 import android.util.Log
-import com.vsb.tamz.osmz_http_server.resolver.ContentType
-import com.vsb.tamz.osmz_http_server.resolver.HttpRequestResolver
-import com.vsb.tamz.osmz_http_server.resolver.HttpResponse
-import com.vsb.tamz.osmz_http_server.resolver.HttpResponseCode
+import com.vsb.tamz.osmz_http_server.resolver.model.ContentType
+import com.vsb.tamz.osmz_http_server.resolver.model.HttpResponse
+import com.vsb.tamz.osmz_http_server.resolver.model.HttpResponseCode
+import com.vsb.tamz.osmz_http_server.resolver.model.RequestMetric
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -16,9 +16,10 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.net.ServerSocket
 import java.net.Socket
+import java.net.SocketException
 import java.util.concurrent.Semaphore
 
-class SocketServer(private val port: Int, private val handler: Handler, private var maxThreads: Int) : Runnable {
+class SocketServer(private val port: Int, private var maxThreads: Int) : Runnable {
 
     @Volatile
     private var running = true;
@@ -26,22 +27,28 @@ class SocketServer(private val port: Int, private val handler: Handler, private 
     @Volatile
     private var semaphore = Semaphore(maxThreads);
 
+    private var handler: Handler? = null;
+
+    private var socketServer: ServerSocket? = null;
+
     override fun run() {
         Log.d("SERVER", "Creating socket");
         while (running) {
             try {
-                ServerSocket(port).use {
+                socketServer = ServerSocket(port);
+                socketServer?.use {
                     Log.d("SERVER", "Socket Waiting for connection");
 
                     val socket: Socket = it.accept();
-                    if(!semaphore.tryAcquire()) {
+                    if (!semaphore.tryAcquire()) {
                         val message = "Server too busy";
-                        val requestResult = HttpResponse(
-                            HttpResponseCode.OK,
-                            ContentType.TEXT_HTML,
-                            message.toByteArray().size.toLong(),
-                            message
-                        );
+                        val requestResult =
+                            HttpResponse(
+                                HttpResponseCode.OK,
+                                ContentType.TEXT_HTML,
+                                message.toByteArray().size.toLong(),
+                                message
+                            );
                         requestResult.writeTo(socket);
                         return@use;
                     }
@@ -50,16 +57,21 @@ class SocketServer(private val port: Int, private val handler: Handler, private 
                         Log.d("SERVER", "Socket Accepted");
 
                         withContext(Dispatchers.IO) {
-                            val input = BufferedReader(InputStreamReader(socket.getInputStream()));
+                            val input =
+                                BufferedReader(InputStreamReader(socket.getInputStream()));
                             val response = input.readLine();
-                            Log.d("SERVER","Accepted message: $response");
+                            Log.d("SERVER", "Accepted message: $response");
 
                             if (response != null) {
                                 val requestResult = HttpRequestResolver.resolve(response);
                                 if (requestResult is HttpResponse) {
                                     val message = Message();
-                                    message.obj = RequestMetric(requestResult.uri ?: "", requestResult.contentLength);
-                                    handler.sendMessage(message)
+                                    message.obj =
+                                        RequestMetric(
+                                            requestResult.uri ?: "",
+                                            requestResult.contentLength
+                                        );
+                                    handler?.sendMessage(message)
                                 }
                                 requestResult.writeTo(socket);
                             } else {
@@ -70,20 +82,28 @@ class SocketServer(private val port: Int, private val handler: Handler, private 
                         }
                     }
                 }
+            } catch (e: SocketException) {
+                if (running) {
+                    Log.e("SERVER", "Error occurred in creating or accessing socket!", e);
+                }
+                semaphore.release();
             } catch (e: IOException) {
-                e.printStackTrace();
-                Log.d("SERVER", "Error occurred in communication!", e);
+                Log.e("SERVER", "Error occurred in communication!", e);
+                semaphore.release();
             }
         }
     }
 
     fun stop() {
         this.running = false;
+        this.socketServer?.close();
+    }
+
+    fun setMetricsHandler(handler: Handler) {
+        this.handler = handler;
     }
 
     fun setMaxThreads(maxThreads: Int): Int {
-//        semaphore = Semaphore(maxThreads);
-//        Log.d("TH", semaphore.availablePermits().toString());
         if (maxThreads > this.maxThreads) {
             semaphore.release(maxThreads - this.maxThreads);
         } else if (!semaphore.tryAcquire(this.maxThreads - maxThreads)) {
