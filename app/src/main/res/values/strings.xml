@@ -18,4 +18,5 @@
 
     <string name="sendBytesLabel">Send</string>
     <string name="sendBytesInitialValue">0 B</string>
+    <string name="sendBytesTemplate">%1$d B</string>
 </resources>

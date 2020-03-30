@@ -26,10 +26,6 @@ class HttpServerService: Service() {
     private var mSurfaceTexture: SurfaceTexture? = null;
 
     override fun onCreate() {
-        // Start up the thread running the service.  Note that we create a
-        // separate thread because the service normally runs in the process's
-        // main thread, which we don't want to block.  We also make it
-        // background priority so CPU-intensive work will not disrupt our UI.
         HandlerThread("ServiceStartArguments", THREAD_PRIORITY_BACKGROUND).apply {
             start()
 
@@ -45,8 +41,6 @@ class HttpServerService: Service() {
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         Log.d("SRV", "Starting service");
 
-        // For each start request, send a message to start a job and deliver the
-        // start ID so we know which request we're stopping when we finish the job
         if (socketServer == null) {
             socketServer =
                 SocketServer(12345, 2);
@@ -61,7 +55,6 @@ class HttpServerService: Service() {
             CameraHolder.startStreaming();
         }
 
-        // If we get killed, after returning from here, restart
         return START_STICKY
     }
 
@@ -83,12 +76,7 @@ class HttpServerService: Service() {
         return socketServer?.setMaxThreads(count)?: 0;
     }
 
-    /**
-     * Class used for the client Binder.  Because we know this service always
-     * runs in the same process as its clients, we don't need to deal with IPC.
-     */
     inner class LocalBinder : Binder() {
-        // Return this instance of LocalService so clients can call public methods
         fun getService(): HttpServerService = this@HttpServerService
     }
 }

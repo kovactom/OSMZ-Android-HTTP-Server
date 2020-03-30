@@ -94,7 +94,7 @@ class CameraActivity : Activity() {
     override fun onPause() {
         super.onPause()
         stopTasks();
-        CameraHolder.releaseCamera() // release the camera immediately on pause event
+        CameraHolder.releaseCamera()
         Toast
             .makeText(this, "Camera streaming was suspended. For resume, restart server service.", Toast.LENGTH_LONG)
             .show();

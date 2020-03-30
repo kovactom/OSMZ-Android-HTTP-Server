@@ -20,9 +20,11 @@ import com.vsb.tamz.osmz_http_server.service.HttpServerService
 
 class MainActivity : Activity() {
 
-    private val PERMISSION_REQUEST_ID = 1;
-    private val HTTP_SERVER_NOTIFICATION_ID = 1;
-    private val HTTP_SERVER_CHANNEL = "HTTP_SERVER_CHANNEL";
+    companion object {
+        private const val PERMISSION_REQUEST_ID = 1;
+        private const val HTTP_SERVER_NOTIFICATION_ID = 1;
+        private const val HTTP_SERVER_CHANNEL = "HTTP_SERVER_CHANNEL";
+    }
 
     private lateinit var mServerService: HttpServerService;
     private var serverServiceIntent: Intent? = null;
@@ -40,7 +42,7 @@ class MainActivity : Activity() {
             val metric: RequestMetric = msg.obj as RequestMetric;
             totalSendSize += metric.responseSize;
             logTextView?.append("URI: ${metric.uri} Size: ${metric.responseSize} B\n");
-            totalSendTextView?.text = "$totalSendSize B";
+            totalSendTextView?.text = getString(R.string.sendBytesTemplate, totalSendSize);
 
             logScrollView?.post {
                 logScrollView?.fullScroll(View.FOCUS_DOWN);
@@ -48,11 +50,9 @@ class MainActivity : Activity() {
         }
     }
 
-    /** Defines callbacks for service binding, passed to bindService()  */
     private val connection = object : ServiceConnection {
 
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
-            // We've bound to LocalService, cast the IBinder and get LocalService instance
             val binder = service as HttpServerService.LocalBinder
             mServerService = binder.getService()
             mBound = true
@@ -113,7 +113,7 @@ class MainActivity : Activity() {
         }
     }
 
-    fun startServerService() {
+    private fun startServerService() {
         val hasReadExternalStoragePermission = hasReadExternalStoragePermission(this);
         val hasWriteExternalStoragePermission = hasWriteExternalStoragePermission(this);
         val hasCameraPermission = hasCameraPermission(this);
@@ -141,7 +141,7 @@ class MainActivity : Activity() {
         }
     }
 
-    fun stopServerService() {
+    private fun stopServerService() {
         mServerService.stopSelf();
         if (mBound) {
             unbindService(connection)
@@ -153,21 +153,21 @@ class MainActivity : Activity() {
             .show();
     }
 
-    fun onServerStart(view: View) {
+    private fun onServerStart(view: View) {
         startServerService();
     }
 
-    fun onServerStop(view: View) {
+    private fun onServerStop(view: View) {
         stopServerService();
     }
 
-    fun onSetMaxThreadCount(view: View) {
+    private fun onSetMaxThreadCount(view: View) {
         val maxThreads: Int = maxThreadCountText?.text.toString().toInt();
         val newMaxThreads = mServerService.setMaxThreadCount(maxThreads)
         maxThreadCountText?.text = newMaxThreads.toString();
     }
 
-    fun onOpenCamera(view: View) {
+    private fun onOpenCamera(view: View) {
         val intent = Intent(this, CameraActivity::class.java);
         startActivity(intent);
     }
@@ -178,7 +178,7 @@ class MainActivity : Activity() {
         grantResults: IntArray
     ) {
         when (requestCode) {
-            PERMISSION_REQUEST_ID -> if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            PERMISSION_REQUEST_ID -> if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 startServerService();
             }
         }

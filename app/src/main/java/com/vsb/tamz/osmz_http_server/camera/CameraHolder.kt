@@ -13,8 +13,7 @@ import java.util.*
 
 object CameraHolder {
 
-    val MEDIA_TYPE_IMAGE = 1
-    val MEDIA_TYPE_VIDEO = 2
+    const val MEDIA_TYPE_IMAGE = 1
 
     @Volatile
     var lastPictureData: ByteArray? = null;
@@ -32,7 +31,7 @@ object CameraHolder {
             }
             mCamera;
         } catch (e: Exception) {
-            null // returns null if camera is unavailable )
+            null
         }
     }
 
@@ -66,7 +65,6 @@ object CameraHolder {
     }
 
 
-    /** Create a File for saving an image or video */
     fun getOutputMediaFile(type: Int): File? {
         val mediaStorageDir = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
@@ -86,9 +84,6 @@ object CameraHolder {
             MEDIA_TYPE_IMAGE -> {
                 File("${mediaStorageDir.path}${File.separator}IMG_$timeStamp.jpg")
             }
-            MEDIA_TYPE_VIDEO -> {
-                File("${mediaStorageDir.path}${File.separator}VID_$timeStamp.mp4")
-            }
             else -> null
         }
     }
@@ -96,7 +91,7 @@ object CameraHolder {
     @Synchronized
     fun releaseCamera() {
         mCamera?.setPreviewCallback(null);
-        mCamera?.release() // release the camera for other applications
+        mCamera?.release()
         mCamera = null
     }
 }
