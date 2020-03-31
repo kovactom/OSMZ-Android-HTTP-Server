@@ -12,3 +12,4 @@ School project for subject OSMZ which provides HTTP server functionality with ca
 *  Camera picture snapshot - provides online access to last picture snapshot via `http://localhost:12345/camera/snapshot`
 *  CGI scripts - provides support for run CGI scripts via HTTP requests, example: `http://localhost:12345/cgi-bin/uptime`
 *  Maximum of active connections can be restricted
+*  Run as android service in background
