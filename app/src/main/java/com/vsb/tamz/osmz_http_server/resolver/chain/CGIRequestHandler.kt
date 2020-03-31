@@ -5,6 +5,7 @@ import com.vsb.tamz.osmz_http_server.resolver.model.*
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.URLDecoder
+import java.util.concurrent.TimeUnit
 
 class CGIRequestHandler(private val nextHandler: RequestHandler? = null):
     RequestHandler(nextHandler) {
@@ -31,7 +32,7 @@ class CGIRequestHandler(private val nextHandler: RequestHandler? = null):
         val cmdProcess = processBuilder.start();
         var processOutput: String? = null;
 
-        cmdProcess.waitFor();
+        cmdProcess.waitFor(10, TimeUnit.SECONDS);
         BufferedReader(InputStreamReader(cmdProcess.inputStream)).use {
             processOutput = it.readText();
         }

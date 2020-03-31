@@ -7,6 +7,7 @@ import com.vsb.tamz.osmz_http_server.resolver.model.GenericResponse
 import com.vsb.tamz.osmz_http_server.resolver.model.HttpRequest
 import java.net.Socket
 import java.net.SocketException
+import java.util.concurrent.atomic.AtomicBoolean
 
 class CameraStreamRequestHandler(
     private val nextHandler: RequestHandler
@@ -19,7 +20,7 @@ class CameraStreamRequestHandler(
 
         return object :
             GenericResponse {
-            override fun writeTo(socket: Socket) {
+            override fun writeTo(socket: Socket, running: AtomicBoolean) {
                 val outputStream = socket.getOutputStream();
                 val boundaryMark = "PictureBoundary";
                 val headerResponse = StringBuilder();
@@ -30,7 +31,7 @@ class CameraStreamRequestHandler(
                 outputStream.write(headerResponse.toString().toByteArray());
 
                 try {
-                    while (socket.isConnected) {
+                    while (socket.isConnected && running.get()) {
                         val response = StringBuilder();
                         response.appendln("--$boundaryMark");
                         response.appendln("Content-Type: ${ContentType.IMAGE_JPEG.textValue}");
@@ -43,6 +44,8 @@ class CameraStreamRequestHandler(
                     }
                 } catch (e: SocketException) {
                     Log.d("STREAM", "Stream closed.");
+                } finally {
+                    socket.close();
                 }
             }
         }

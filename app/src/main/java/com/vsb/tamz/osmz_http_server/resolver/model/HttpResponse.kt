@@ -1,6 +1,7 @@
 package com.vsb.tamz.osmz_http_server.resolver.model
 
 import java.net.Socket
+import java.util.concurrent.atomic.AtomicBoolean
 
 data class HttpResponse(
     val status: HttpResponseCode,
@@ -11,7 +12,7 @@ data class HttpResponse(
     val uri: String? = null
 ): GenericResponse {
 
-    override fun writeTo(socket: Socket) {
+    override fun writeTo(socket: Socket, running: AtomicBoolean) {
         val outputStream = socket.getOutputStream();
         val response = StringBuilder();
         response.appendln("HTTP/1.1 ${status.code} ${status.text}");

@@ -18,11 +18,12 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketException
 import java.util.concurrent.Semaphore
+import java.util.concurrent.atomic.AtomicBoolean
 
 class SocketServer(private val port: Int, private var maxThreads: Int) : Runnable {
 
     @Volatile
-    private var running = true;
+    private var running: AtomicBoolean = AtomicBoolean(true);
 
     @Volatile
     private var semaphore = Semaphore(maxThreads);
@@ -33,7 +34,7 @@ class SocketServer(private val port: Int, private var maxThreads: Int) : Runnabl
 
     override fun run() {
         Log.d("SERVER", "Creating socket");
-        while (running) {
+        while (running.get()) {
             try {
                 socketServer = ServerSocket(port);
                 socketServer?.use {
@@ -49,7 +50,7 @@ class SocketServer(private val port: Int, private var maxThreads: Int) : Runnabl
                                 message.toByteArray().size.toLong(),
                                 message
                             );
-                        requestResult.writeTo(socket);
+                        requestResult.writeTo(socket, running);
                         return@use;
                     }
 
@@ -73,7 +74,7 @@ class SocketServer(private val port: Int, private var maxThreads: Int) : Runnabl
                                         );
                                     handler?.sendMessage(message)
                                 }
-                                requestResult.writeTo(socket);
+                                requestResult.writeTo(socket, running);
                             } else {
                                 socket.close();
                                 Log.d("SERVER", "Socket closed");
@@ -83,7 +84,7 @@ class SocketServer(private val port: Int, private var maxThreads: Int) : Runnabl
                     }
                 }
             } catch (e: SocketException) {
-                if (running) {
+                if (running.get()) {
                     Log.e("SERVER", "Error occurred in creating or accessing socket!", e);
                 }
                 semaphore.release();
@@ -95,7 +96,7 @@ class SocketServer(private val port: Int, private var maxThreads: Int) : Runnabl
     }
 
     fun stop() {
-        this.running = false;
+        this.running.set(false);
         this.socketServer?.close();
     }
 
