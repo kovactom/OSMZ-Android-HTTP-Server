@@ -27,7 +27,7 @@ class CGIRequestHandler(private val nextHandler: RequestHandler? = null):
         Log.d("CMD", "$program $parameters");
 
         val processBuilder =
-            if (parameters.isNotEmpty()) ProcessBuilder(program, parameters)
+            if (parameters.isNotEmpty()) ProcessBuilder(program, *parameters.split(" ").toTypedArray())
             else ProcessBuilder(program);
         val cmdProcess = processBuilder.start();
         var processOutput: String? = null;
